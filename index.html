@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refugio Emocional - Chequeador de Emociones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Custom Icon Component to bridge Lucide and React in this HTML environment
+        const Icon = ({ name, className = "w-6 h-6" }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        const EMOTIONS = [
+            {
+                id: 'sadness',
+                name: 'Tristeza',
+                icon: 'cloud-rain',
+                color: 'bg-blue-100 text-blue-600 border-blue-200',
+                hoverColor: 'hover:bg-blue-200',
+                description: 'Es natural sentirse así. La tristeza nos ayuda a procesar pérdidas y cambios.',
+                activities: [
+                    { title: 'Permítete sentir', desc: 'No reprimas las lágrimas si surgen. Es una liberación necesaria.' },
+                    { title: 'Escucha música suave', desc: 'Crea una lista de reproducción que valide tu estado actual.' },
+                    { title: 'Escribe una carta', desc: 'Pon en papel lo que sientes, incluso si no planeas enviarla.' },
+                    { title: 'Busca confort', desc: 'Una manta cálida, una bebida caliente o un abrazo pueden ayudar.' }
+                ]
+            },
+            {
+                id: 'anger',
+                name: 'Enojo',
+                icon: 'zap',
+                color: 'bg-red-100 text-red-600 border-red-200',
+                hoverColor: 'hover:bg-red-200',
+                description: 'El enojo es una señal de que algo se percibe como injusto. Necesita salida física o calma.',
+                activities: [
+                    { title: 'Movimiento físico', desc: 'Camina rápido, haz flexiones o sal a correr para liberar energía.' },
+                    { title: 'Técnica del 10 al 0', desc: 'Cuenta hacia atrás lentamente antes de reaccionar o hablar.' },
+                    { title: 'Canalización creativa', desc: 'Dibuja con trazos fuertes o escribe tus quejas sin filtro.' },
+                    { title: 'Respiración de caja', desc: 'Inhala 4s, mantén 4s, exhala 4s, mantén 4s.' }
+                ]
+            },
+            {
+                id: 'anxiety',
+                name: 'Ansiedad',
+                icon: 'shield-alert',
+                color: 'bg-orange-100 text-orange-600 border-orange-200',
+                hoverColor: 'hover:bg-orange-200',
+                description: 'Tu cuerpo está en alerta máxima. Vamos a traer el enfoque de vuelta al presente.',
+                activities: [
+                    { title: 'Técnica 5-4-3-2-1', desc: 'Identifica 5 cosas que ves, 4 que tocas, 3 que oyes, 2 que hueles y 1 que saboreas.' },
+                    { title: 'Agua fría', desc: 'Mójate la cara o las muñecas con agua fría para resetear el sistema nervioso.' },
+                    { title: 'Enraizamiento', desc: 'Pon los pies firmes en el suelo y siente el peso de tu cuerpo.' },
+                    { title: 'Limitar estímulos', desc: 'Apaga las pantallas y busca un lugar con poco ruido.' }
+                ]
+            },
+            {
+                id: 'fear',
+                name: 'Miedo',
+                icon: 'shield',
+                color: 'bg-purple-100 text-purple-600 border-purple-200',
+                hoverColor: 'hover:bg-purple-200',
+                description: 'El miedo intenta protegerte, pero a veces su alarma es demasiado fuerte. Busca seguridad.',
+                activities: [
+                    { title: 'Busca un "Lugar Seguro"', desc: 'Visualiza un sitio donde nada pueda dañarte y respira ahí.' },
+                    { title: 'Cuestiona el pensamiento', desc: '¿Este peligro es real ahora mismo o es una posibilidad futura?' },
+                    { title: 'Abrazo de mariposa', desc: 'Cruza tus manos sobre el pecho y da golpecitos rítmicos en tus hombros.' },
+                    { title: 'Afirmaciones de seguridad', desc: 'Repite: "Estoy a salvo en este momento, en este lugar".' }
+                ]
+            },
+            {
+                id: 'love',
+                name: 'Amor',
+                icon: 'heart',
+                color: 'bg-rose-100 text-rose-600 border-rose-200',
+                hoverColor: 'hover:bg-rose-200',
+                description: 'El amor es el vínculo que nos une a los demás y a nosotros mismos. Cultivarlo nutre el alma.',
+                activities: [
+                    { title: 'Practica la autocompasión', desc: 'Mírate al espejo y dite algo amable que le dirías a un mejor amigo.' },
+                    { title: 'Mensaje de aprecio', desc: 'Envía un mensaje corto a alguien que agradezcas tener en tu vida.' },
+                    { title: 'Acto de servicio', desc: 'Haz algo pequeño y desinteresado por otra persona hoy.' },
+                    { title: 'Cuidado personal', desc: 'Dedica 15 minutos a una actividad que te haga sentir cuidado y valorado.' }
+                ]
+            },
+            {
+                id: 'disgust',
+                name: 'Desagrado',
+                icon: 'thumbs-down',
+                color: 'bg-lime-100 text-lime-700 border-lime-200',
+                hoverColor: 'hover:bg-lime-200',
+                description: 'El desagrado nos avisa sobre lo que no es saludable para nosotros o va en contra de nuestros valores.',
+                activities: [
+                    { title: 'Establece un límite', desc: 'Identifica qué te causa rechazo y define cómo puedes distanciarte saludablemente.' },
+                    { title: 'Limpieza de espacio', desc: 'Organiza o limpia un área pequeña de tu entorno para recuperar control.' },
+                    { title: 'Aire fresco', desc: 'Cambia de ambiente físico por unos minutos para "resetear" tus sentidos.' },
+                    { title: 'Claridad de valores', desc: 'Escribe por qué esto te desagrada; te ayudará a entender qué es importante para ti.' }
+                ]
+            },
+            {
+                id: 'joy',
+                name: 'Alegría',
+                icon: 'smile',
+                color: 'bg-yellow-100 text-yellow-600 border-yellow-200',
+                hoverColor: 'hover:bg-yellow-200',
+                description: '¡Qué buen momento! Disfrutar plenamente la alegría fortalece tu resiliencia.',
+                activities: [
+                    { title: 'Comparte la chispa', desc: 'Llama a alguien para contarle algo bueno que te pasó.' },
+                    { title: 'Guarda el recuerdo', desc: 'Toma una foto o escribe qué te hace feliz en este momento.' },
+                    { title: 'Practica la gratitud', desc: 'Enumera tres razones por las que te sientes afortunado hoy.' },
+                    { title: 'Celebra', desc: 'Date un pequeño gusto o baila tu canción favorita.' }
+                ]
+            },
+            {
+                id: 'calm',
+                name: 'Calma',
+                icon: 'wind',
+                color: 'bg-emerald-100 text-emerald-600 border-emerald-200',
+                hoverColor: 'hover:bg-emerald-200',
+                description: 'Un estado de equilibrio ideal para la reflexión y la conexión personal.',
+                activities: [
+                    { title: 'Meditación', desc: 'Cierra los ojos y simplemente observa tu respiración sin juzgar.' },
+                    { title: 'Lectura ligera', desc: 'Disfruta de ese libro o artículo que tenías pendiente.' },
+                    { title: 'Conexión con la naturaleza', desc: 'Si puedes, observa el cielo o cuida una planta.' },
+                    { title: 'Planificación serena', desc: 'Organiza tu mañana sin presiones, desde un lugar de paz.' }
+                ]
+            }
+        ];
+
+        function App() {
+            const [selectedEmotion, setSelectedEmotion] = useState(null);
+            const [reflection, setReflection] = useState("");
+            const [completedActivities, setCompletedActivities] = useState({});
+            const [view, setView] = useState('picker');
+
+            const handleEmotionSelect = (emotion) => {
+                setSelectedEmotion(emotion);
+                setView('details');
+                setReflection("");
+                setCompletedActivities({});
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const toggleActivity = (index) => {
+                setCompletedActivities(prev => ({
+                    ...prev,
+                    [index]: !prev[index]
+                }));
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto pb-20">
+                        {/* Header */}
+                        <header className="mb-8 text-center animate-fade-in">
+                            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-2">
+                                <Icon name="sparkles" className="w-8 h-8 text-indigo-500" /> Refugio Emocional
+                            </h1>
+                            <p className="text-slate-600">Un espacio para entender, sentir y transitar lo que vives hoy.</p>
+                        </header>
+
+                        {view === 'picker' ? (
+                            <div className="space-y-8 animate-fade-in">
+                                <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                                    <h2 className="text-xl font-semibold mb-6 text-center text-slate-700">¿Cómo te sientes en este momento?</h2>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        {EMOTIONS.map((emotion) => (
+                                            <button
+                                                key={emotion.id}
+                                                onClick={() => handleEmotionSelect(emotion)}
+                                                className={`flex flex-col items-center p-4 rounded-xl border transition-all transform hover:scale-105 ${emotion.color} ${emotion.hoverColor}`}
+                                            >
+                                                <div className="mb-2">
+                                                    <Icon name={emotion.icon} className="w-8 h-8" />
+                                                </div>
+                                                <span className="text-xs font-bold uppercase tracking-wider text-center">{emotion.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+                                
+                                <section className="text-center p-8 bg-indigo-50 rounded-2xl border border-indigo-100">
+                                    <h3 className="text-indigo-900 font-semibold mb-2 italic">
+                                        "Todas las emociones son mensajeras, ninguna es mala por sí misma."
+                                    </h3>
+                                </section>
+                            </div>
+                        ) : (
+                            <div className="animate-fade-in">
+                                <button 
+                                    onClick={() => setView('picker')}
+                                    className="mb-6 text-slate-500 hover:text-indigo-600 flex items-center gap-2 transition-colors font-medium"
+                                >
+                                    <Icon name="arrow-left" className="w-4 h-4" /> Volver al selector
+                                </button>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Emotion Info */}
+                                    <div className="lg:col-span-1 space-y-6">
+                                        <div className={`p-8 rounded-2xl border ${selectedEmotion.color} flex flex-col items-center text-center shadow-md`}>
+                                            <Icon name={selectedEmotion.icon} className="w-10 h-10" />
+                                            <h2 className="text-2xl font-bold mt-4">Siento {selectedEmotion.name}</h2>
+                                            <p className="mt-4 text-sm opacity-90 leading-relaxed">
+                                                {selectedEmotion.description}
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                                <Icon name="book-open" className="w-4 h-4 text-indigo-500" /> Notas de reflexión
+                                            </h3>
+                                            <textarea
+                                                className="w-full h-32 p-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all resize-none"
+                                                placeholder="¿Qué crees que detonó esta emoción? ¿Dónde la sientes en tu cuerpo?"
+                                                value={reflection}
+                                                onChange={(e) => setReflection(e.target.value)}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    {/* Activities */}
+                                    <div className="lg:col-span-2">
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-full">
+                                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+                                                <Icon name="clock" className="w-5 h-5 text-indigo-500" /> Actividades sugeridas
+                                            </h3>
+                                            
+                                            <div className="space-y-4">
+                                                {selectedEmotion.activities.map((activity, idx) => (
+                                                    <div 
+                                                        key={idx}
+                                                        onClick={() => toggleActivity(idx)}
+                                                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-4 ${
+                                                            completedActivities[idx] 
+                                                                ? 'bg-slate-50 border-emerald-200 opacity-60' 
+                                                                : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-md'
+                                                        }`}
+                                                    >
+                                                        <div className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                                            completedActivities[idx] ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                                                        }`}>
+                                                            {completedActivities[idx] && <Icon name="check" className="w-4 h-4 text-white" />}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className={`font-semibold ${completedActivities[idx] ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
+                                                                {activity.title}
+                                                            </h4>
+                                                            <p className="text-sm text-slate-600 mt-1">{activity.desc}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {Object.values(completedActivities).filter(Boolean).length === selectedEmotion.activities.length && (
+                                                <div className="mt-8 p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 text-center animate-bounce">
+                                                    ✨ ¡Bien hecho! Te estás cuidando mucho.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Support Section */}
+                        <section className="mt-12 bg-white rounded-2xl p-8 shadow-lg border-2 border-indigo-100 text-center relative overflow-hidden animate-fade-in">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"></div>
+                            <div className="max-w-2xl mx-auto">
+                                <div className="flex justify-center mb-4">
+                                    <Icon name="heart" className="w-10 h-10 text-rose-500 animate-pulse" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-3">Reconocer tus emociones es un acto valiente.</h3>
+                                <p className="text-slate-600 mb-6">
+                                    Si alguna emoción te desborda o simplemente necesitas procesar lo que estás viviendo, 
+                                    aquí puedes pedir tu espacio de escucha. No tienes que transitar esto a solas.
+                                </p>
+                                <a 
+                                    href="https://ucn.edu.co/consultame/" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-indigo-200 transition-all transform hover:-translate-y-1"
+                                >
+                                    <Icon name="message-circle" className="w-5 h-5" />
+                                    Quiero hablar
+                                    <Icon name="external-link" className="w-4 h-4 opacity-70" />
+                                </a>
+                            </div>
+                        </section>
+
+                        <footer className="mt-12 py-6 text-center text-slate-400 text-sm">
+                            <p>© 2024 Refugio Emocional • Tu bienestar es prioridad.</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
